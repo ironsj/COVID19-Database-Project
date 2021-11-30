@@ -2,12 +2,14 @@ SPOOL project.txt
 SET ECHO ON
 /*
 CIS 353 - Database Design Project
-<One line per team member name; in alphabetical order>
+Alek Sherwood
+Annemieke Engelsma
+Jake Irons
+Karim Seif
 */
 --
 --
-/*< The SQL/DDL code that creates your schema >
-In the DDL, every IC must have a unique name; e.g. IC5, IC10, IC15, etc.*/
+/*< The SQL/DDL code that creates your schema >*/
 CREATE TABLE Residence(
 residenceID INTEGER,
 residenceName VARCHAR2(25) NOT NULL,
@@ -135,9 +137,7 @@ CONSTRAINT attendsIC4 CHECK(role IN('Student', 'Professor'))
 --
 --
 SET FEEDBACK OFF
-/*< The INSERT statements that populate the tables>
-Important: Keep the number of rows in each table small enough so that the results of your
-queries can be verified by hand. See the Sailors database as an example.*/
+/*< The INSERT statements that populate the tables>*/
 INSERT INTO Residence VALUES (111, 'Campus View', 'Off Campus');
 INSERT INTO Residence VALUES (222, '48 West', 'Off Campus');
 INSERT INTO Residence VALUES (333, 'Laker Village', 'On Campus');
@@ -259,17 +259,98 @@ SELECT * FROM VaccineTest;
 SELECT * FROM DepartmentLocation;
 SELECT * FROM Attends;
 --
-/*< The SQL queries>. Include the following for each query:
-? A comment line stating the query number and the feature(s) it demonstrates
-(e.g. -- Q25 – correlated subquery).
-? A comment line stating the query in English.
-? The SQL code for the query.*/
+/*< The SQL queries>*/
 --
-/*< The insert/delete/update statements to test the enforcement of ICs >
-Include the following items for every IC that you test (Important: see the next section titled
-“Submit a final report” regarding which ICs you need to test).
-? A comment line stating: Testing: < IC name>
-? A SQL INSERT, DELETE, or UPDATE that will test the IC.
-COMMIT;*/
+-- Q1: A join involving at least four relations
+-- Select the G number and names of people who attend Business Ethics and received the Johnson and Johnson vaccine.
+SELECT	p.gNumber, p.pName
+FROM	Person p, Class c, VaccineRecord v, Attends a
+WHERE	p.gNumber = a.gNumber AND
+	a.classID = c.classID AND
+	c.className = 'Business Ethics' AND
+	p.gNumber = v.gNumber AND
+	v.vaccineType = 'Johnson and Johnson';
+-- Q2: A self-join
+-- Select pairs of classes that are taught in the same room. Remove duplicates.
+SELECT	c1.className, c2.className
+FROM	Class c1, Class c2
+WHERE	c1.roomNum = c2.roomNum AND
+	c1.classID < c2.classID;
+-- Q3: Union
+-- Select the G number and name of every person whose name is â€˜John Smithâ€™ or every person that lives on campus.
+SELECT	p.gNumber, p.pName
+FROM	Person p
+WHERE	p.pName = 'John Smith'
+UNION
+SELECT	p.gNumber, p.pName
+FROM	Person p, Residence r
+WHERE	p.resID = r.residenceID AND
+	r.residenceType = 'On Campus';
+-- Q4: Max, Min
+-- Select the highest and lowest capacities from the Room table.
+SELECT MAX(roomCapacity), MIN(roomCapacity)
+FROM Room;
+-- Q5: GROUP BY, HAVING, and ORDER BY, all appearing in the same query.
+-- Select the G number and name of students that are taking more than 2 classes. Order by G number.
+SELECT	p.gNumber, p.pName, COUNT(*) AS numClasses
+FROM	Person p, Attends a
+WHERE	p.gNumber = a.gNumber
+GROUP BY p.gNumber, p.pName
+HAVING	COUNT(*) > 2
+ORDER BY p.gNumber;
+-- Q6: A correlated subquery
+-- Select the G number and names of students who live on campus and received the Moderna vaccine.
+SELECT  p.gNumber, p.pName
+FROM 	Person p, Residence r
+WHERE 	p.resID = r.residenceID AND
+	r.residenceType = 'On Campus' AND 
+	EXISTS (SELECT *
+		FROM VaccineRecord v
+		WHERE p.gNumber = v.gNumber AND
+		v.vaccineType = 'Moderna');
+-- Q7: A non-correlated subquery
+-- Select the G number and names of students who live on campus and received the Moderna vaccine.
+SELECT	p.gNumber, p.pName
+FROM	Person p, Residence r
+WHERE	p.resID = r.residenceID AND
+	r.residenceType = 'On Campus' AND 
+	p.gNumber IN (SELECT v.gNumber
+			FROM VaccineRecord v
+			WHERE v.vaccineType = 'Moderna');
+-- Q8: A relational DIVISION query
+-- Select the G number and name of every person who attends every class that is held in room 2222.
+SELECT p.gNumber, p.pName
+FROM Person p
+WHERE NOT EXISTS((SELECT c.classID
+		   FROM Class c
+   	           WHERE c.roomNum = 2222)
+                   MINUS
+                 (SELECT c.classID
+                   FROM Class c, Attends a
+                   WHERE p.gNumber = a.gNumber AND
+                   a.classID = c.classID AND
+                   c.roomNum = 2222));
+-- Q9: An outer join query.
+-- Select the G number and name of every person. Also, for those who have received a COVID test, show the date and results of the test.
+SELECT p.gNumber, p.pName, v.testResult, v.testDate
+FROM Person P LEFT OUTER JOIN VaccineTest v on p.gNumber = v.gNumber;
+-- Q10: Count
+-- Find the number of locations for each department.
+SELECT	d.departmentID, COUNT(*)
+FROM	DepartmentLocation d
+GROUP BY d.departmentID;
+--
+/*< The insert/delete/update statements to test the enforcement of ICs >*/
+--
+-- Testing: personIC1
+INSERT INTO Person VALUES ('G00000000', 'James Smith', 'Student', 111);
+-- Testing: personIC2
+UPDATE Person SET resID = 0 WHERE gNumber = 'G00000000';
+-- Testing: recordIC3
+INSERT INTO VaccineRecord VALUES ('G00000002', TO_DATE('10/01/21', 'MM/DD/YY'), 'Fake Vaccine', 1);
+-- Testing: recordIC4
+INSERT INTO VaccineRecord VALUES ('G00000001', TO_DATE('05/10/21', 'MM/DD/YY'), 'Johnson and Johnson', 2);
+--
+COMMIT;
 --
 SPOOL OFF

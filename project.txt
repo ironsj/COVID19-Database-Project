@@ -1,11 +1,13 @@
 SQL> /*
 SQL> CIS 353 - Database Design Project
-SQL> <One line per team member name; in alphabetical order>
+SQL> Alek Sherwood
+SQL> Annemieke Engelsma
+SQL> Jake Irons
+SQL> Karim Seif
 SQL> */
 SQL> --
 SQL> --
-SQL> /*< The SQL/DDL code that creates your schema >
-SQL> In the DDL, every IC must have a unique name; e.g. IC5, IC10, IC15, etc.*/
+SQL> /*< The SQL/DDL code that creates your schema >*/
 SQL> CREATE TABLE Residence(
   2  residenceID INTEGER,
   3  residenceName VARCHAR2(25) NOT NULL,
@@ -160,9 +162,7 @@ Table created.
 SQL> --
 SQL> --
 SQL> SET FEEDBACK OFF
-SQL> /*< The INSERT statements that populate the tables>
-SQL> Important: Keep the number of rows in each table small enough so that the results of your
-SQL> queries can be verified by hand. See the Sailors database as an example.*/
+SQL> /*< The INSERT statements that populate the tables>*/
 SQL> INSERT INTO Residence VALUES (111, 'Campus View', 'Off Campus');
 SQL> INSERT INTO Residence VALUES (222, '48 West', 'Off Campus');
 SQL> INSERT INTO Residence VALUES (333, 'Laker Village', 'On Campus');
@@ -235,8 +235,8 @@ SQL> INSERT INTO VaccineTest VALUES ('G11111111', TO_DATE('07/10/21', 'MM/DD/YY'
 SQL> INSERT INTO VaccineTest VALUES ('G22222222', TO_DATE('12/17/20', 'MM/DD/YY'), 'Negative', 'Rapid');
 SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('10/21/20', 'MM/DD/YY'), 'Negative', 'Slow');
 SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('01/27/20', 'MM/DD/YY'), 'Negative', 'Slow');
-SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('02/14/20', 'MM/DD/YY'), 'Negative', 'Rapid');
-SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('09/10/20', 'MM/DD/YY'), 'Negative', 'Rapid');
+SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('02/14/21', 'MM/DD/YY'), 'Negative', 'Rapid');
+SQL> INSERT INTO VaccineTest VALUES ('G44444444', TO_DATE('09/10/21', 'MM/DD/YY'), 'Negative', 'Rapid');
 SQL> --------
 SQL> INSERT INTO DepartmentLocation VALUES (11, 'Allendale');
 SQL> INSERT INTO DepartmentLocation VALUES (11, 'Grand Rapids');
@@ -398,8 +398,8 @@ G11111111  10-JUL-21 Negative        Rapid
 G22222222  17-DEC-20 Negative        Rapid                                      
 G44444444  21-OCT-20 Negative        Slow                                       
 G44444444  27-JAN-20 Negative        Slow                                       
-G44444444  14-FEB-20 Negative        Rapid                                      
-G44444444  10-SEP-20 Negative        Rapid                                      
+G44444444  14-FEB-21 Negative        Rapid                                      
+G44444444  10-SEP-21 Negative        Rapid                                      
 
 18 rows selected.
 
@@ -454,17 +454,233 @@ G00000009  BMS 250 Student
 23 rows selected.
 
 SQL> --
-SQL> /*< The SQL queries>. Include the following for each query:
-SQL> ? A comment line stating the query number and the feature(s) it demonstrates
-SQL> (e.g. -- Q25 – correlated subquery).
-SQL> ? A comment line stating the query in English.
-SQL> ? The SQL code for the query.*/
+SQL> /*< The SQL queries>*/
 SQL> --
-SQL> /*< The insert/delete/update statements to test the enforcement of ICs >
-SQL> Include the following items for every IC that you test (Important: see the next section titled
-SQL> “Submit a final report” regarding which ICs you need to test).
-SQL> ? A comment line stating: Testing: < IC name>
-SQL> ? A SQL INSERT, DELETE, or UPDATE that will test the IC.
-SQL> COMMIT;*/
+SQL> -- Q1: A join involving at least four relations
+SQL> -- Select the G number and names of people who attend Business Ethics and received the Johnson and Johnson vaccine.
+SQL> SELECT  p.gNumber, p.pName
+  2  FROM    Person p, Class c, VaccineRecord v, Attends a
+  3  WHERE   p.gNumber = a.gNumber AND
+  4  	     a.classID = c.classID AND
+  5  	     c.className = 'Business Ethics' AND
+  6  	     p.gNumber = v.gNumber AND
+  7  	     v.vaccineType = 'Johnson and Johnson';
+
+GNUMBER    PNAME                                                                
+---------- --------------------                                                 
+G00000001  Jessica Williams                                                     
+G00000005  Erma Nguyen                                                          
+G00000009  Suzanne Barber                                                       
+
+3 rows selected.
+
+SQL> -- Q2: A self-join
+SQL> -- Select pairs of classes that are taught in the same room. Remove duplicates.
+SQL> SELECT  c1.className, c2.className
+  2  FROM    Class c1, Class c2
+  3  WHERE   c1.roomNum = c2.roomNum AND
+  4  	     c1.classID < c2.classID;
+
+CLASSNAME                 CLASSNAME                                             
+------------------------- -------------------------                             
+Discrete Mathematics      Advance Calculus I                                    
+
+1 row selected.
+
+SQL> -- Q3: Union
+SQL> -- Select the G number and name of every person whose name is â€˜John Smithâ€™ or every person that lives on campus.
+SQL> SELECT  p.gNumber, p.pName
+  2  FROM    Person p
+  3  WHERE   p.pName = 'John Smith'
+  4  UNION
+  5  SELECT  p.gNumber, p.pName
+  6  FROM    Person p, Residence r
+  7  WHERE   p.resID = r.residenceID AND
+  8  	     r.residenceType = 'On Campus';
+
+GNUMBER    PNAME                                                                
+---------- --------------------                                                 
+G00000000  John Smith                                                           
+G00000002  Benjamin Mcguire                                                     
+G00000003  Jane Wheeler                                                         
+G00000006  Gregg Roberson                                                       
+G00000007  Alexandra Cain                                                       
+
+5 rows selected.
+
+SQL> -- Q4: Max, Min
+SQL> -- Select the highest and lowest capacities from the Room table.
+SQL> SELECT MAX(roomCapacity), MIN(roomCapacity)
+  2  FROM Room;
+
+MAX(ROOMCAPACITY) MIN(ROOMCAPACITY)                                             
+----------------- -----------------                                             
+               75                30                                             
+
+1 row selected.
+
+SQL> -- Q5: GROUP BY, HAVING, and ORDER BY, all appearing in the same query.
+SQL> -- Select the G number and name of students that are taking more than 2 classes. Order by G number.
+SQL> SELECT  p.gNumber, p.pName, COUNT(*) AS numClasses
+  2  FROM    Person p, Attends a
+  3  WHERE   p.gNumber = a.gNumber
+  4  GROUP BY p.gNumber, p.pName
+  5  HAVING  COUNT(*) > 2
+  6  ORDER BY p.gNumber;
+
+GNUMBER    PNAME                NUMCLASSES                                      
+---------- -------------------- ----------                                      
+G00000004  Meoldy Harmon                 3                                      
+G00000009  Suzanne Barber                4                                      
+
+2 rows selected.
+
+SQL> -- Q6: A correlated subquery
+SQL> -- Select the G number and names of students who live on campus and received the Moderna vaccine.
+SQL> SELECT  p.gNumber, p.pName
+  2  FROM    Person p, Residence r
+  3  WHERE   p.resID = r.residenceID AND
+  4  	     r.residenceType = 'On Campus' AND
+  5  	     EXISTS (SELECT *
+  6  		     FROM VaccineRecord v
+  7  		     WHERE p.gNumber = v.gNumber AND
+  8  		     v.vaccineType = 'Moderna');
+
+GNUMBER    PNAME                                                                
+---------- --------------------                                                 
+G00000003  Jane Wheeler                                                         
+G00000006  Gregg Roberson                                                       
+
+2 rows selected.
+
+SQL> -- Q7: A non-correlated subquery
+SQL> -- Select the G number and names of students who live on campus and received the Moderna vaccine.
+SQL> SELECT  p.gNumber, p.pName
+  2  FROM    Person p, Residence r
+  3  WHERE   p.resID = r.residenceID AND
+  4  	     r.residenceType = 'On Campus' AND
+  5  	     p.gNumber IN (SELECT v.gNumber
+  6  			     FROM VaccineRecord v
+  7  			     WHERE v.vaccineType = 'Moderna');
+
+GNUMBER    PNAME                                                                
+---------- --------------------                                                 
+G00000003  Jane Wheeler                                                         
+G00000006  Gregg Roberson                                                       
+
+2 rows selected.
+
+SQL> -- Q8: A relational DIVISION query
+SQL> -- Select the G number and name of every person who attends every class that is held in room 2222.
+SQL> SELECT p.gNumber, p.pName
+  2  FROM Person p
+  3  WHERE NOT EXISTS((SELECT c.classID
+  4  			FROM Class c
+  5  			WHERE c.roomNum = 2222)
+  6  			MINUS
+  7  		      (SELECT c.classID
+  8  			FROM Class c, Attends a
+  9  			WHERE p.gNumber = a.gNumber AND
+ 10  			a.classID = c.classID AND
+ 11  			c.roomNum = 2222));
+
+GNUMBER    PNAME                                                                
+---------- --------------------                                                 
+G00000004  Meoldy Harmon                                                        
+G33333333  Gene Copeland                                                        
+
+2 rows selected.
+
+SQL> -- Q9: An outer join query.
+SQL> -- Select the G number and name of every person. Also, for those who have received a COVID test, show the date and results of the test.
+SQL> SELECT p.gNumber, p.pName, v.testResult, v.testDate
+  2  FROM Person P LEFT OUTER JOIN VaccineTest v on p.gNumber = v.gNumber;
+
+GNUMBER    PNAME                TESTRESULT      TESTDATE                        
+---------- -------------------- --------------- ---------                       
+G00000000  John Smith           Negative        10-SEP-21                       
+G00000000  John Smith           Negative        16-OCT-21                       
+G00000002  Benjamin Mcguire     Positive        16-NOV-21                       
+G00000003  Jane Wheeler         Negative        16-MAY-21                       
+G00000003  Jane Wheeler         Negative        17-JUN-21                       
+G00000005  Erma Nguyen                          28-NOV-21                       
+G00000006  Gregg Roberson       Negative        11-APR-21                       
+G00000006  Gregg Roberson       Negative        18-JUN-21                       
+G00000006  Gregg Roberson       Positive        15-AUG-21                       
+G00000006  Gregg Roberson       Positive        31-OCT-20                       
+G00000007  Alexandra Cain       Positive        05-JAN-21                       
+
+GNUMBER    PNAME                TESTRESULT      TESTDATE                        
+---------- -------------------- --------------- ---------                       
+G00000008  Peggy Holloway       Negative        06-MAY-21                       
+G11111111  Sarah Jones          Negative        10-JUL-21                       
+G22222222  Stacy Baldwin        Negative        17-DEC-20                       
+G44444444  Francisco Brock      Negative        21-OCT-20                       
+G44444444  Francisco Brock      Negative        27-JAN-20                       
+G44444444  Francisco Brock      Negative        14-FEB-21                       
+G44444444  Francisco Brock      Negative        10-SEP-21                       
+G33333333  Gene Copeland                                                        
+G00000001  Jessica Williams                                                     
+G00000009  Suzanne Barber                                                       
+G00000004  Meoldy Harmon                                                        
+
+22 rows selected.
+
+SQL> -- Q10: Count
+SQL> -- Find the number of locations for each department.
+SQL> SELECT  d.departmentID, COUNT(*)
+  2  FROM    DepartmentLocation d
+  3  GROUP BY d.departmentID;
+
+DEPARTMENTID   COUNT(*)                                                         
+------------ ----------                                                         
+          11          3                                                         
+          22          1                                                         
+          33          1                                                         
+          44          2                                                         
+
+4 rows selected.
+
+SQL> --
+SQL> /*< The insert/delete/update statements to test the enforcement of ICs >*/
+SQL> --
+SQL> -- Testing: personIC1
+SQL> INSERT INTO Person VALUES ('G00000000', 'James Smith', 'Student', 111);
+INSERT INTO Person VALUES ('G00000000', 'James Smith', 'Student', 111)
+*
+ERROR at line 1:
+ORA-00001: unique constraint (IRONSJ.PERSONIC1) violated 
+
+
+SQL> -- Testing: personIC2
+SQL> UPDATE Person SET resID = 0 WHERE gNumber = 'G00000000';
+UPDATE Person SET resID = 0 WHERE gNumber = 'G00000000'
+*
+ERROR at line 1:
+ORA-02291: integrity constraint (IRONSJ.PERSONIC2) violated - parent key not 
+found 
+
+
+SQL> -- Testing: recordIC3
+SQL> INSERT INTO VaccineRecord VALUES ('G00000002', TO_DATE('10/01/21', 'MM/DD/YY'), 'Fake Vaccine', 1);
+INSERT INTO VaccineRecord VALUES ('G00000002', TO_DATE('10/01/21', 'MM/DD/YY'), 'Fake Vaccine', 1)
+*
+ERROR at line 1:
+ORA-02290: check constraint (IRONSJ.RECORDIC3) violated 
+
+
+SQL> -- Testing: recordIC4
+SQL> INSERT INTO VaccineRecord VALUES ('G00000001', TO_DATE('05/10/21', 'MM/DD/YY'), 'Johnson and Johnson', 2);
+INSERT INTO VaccineRecord VALUES ('G00000001', TO_DATE('05/10/21', 'MM/DD/YY'), 'Johnson and Johnson', 2)
+*
+ERROR at line 1:
+ORA-02290: check constraint (IRONSJ.RECORDIC4) violated 
+
+
+SQL> --
+SQL> COMMIT;
+
+Commit complete.
+
 SQL> --
 SQL> SPOOL OFF
